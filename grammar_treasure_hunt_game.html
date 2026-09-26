@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventura de Gramática - Grammar Treasure Hunt</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Fredoka for child-friendly typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        treasure: {
+                            gold: '#FFD700',
+                            orange: '#FF8C00',
+                            purple: '#6B46C1',
+                            blue: '#3182CE',
+                            green: '#38A169',
+                            pink: '#ED64A6'
+                        }
+                    },
+                    animation: {
+                        bounceSlow: 'bounce 2s infinite',
+                        wiggle: 'wiggle 0.5s ease-in-out infinite',
+                        pulseGlow: 'pulseGlow 1.5s infinite alternate',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(255, 215, 0, 0.4)' },
+                            '100%': { boxShadow: '0 0 30px rgba(255, 215, 0, 0.9)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .bg-pattern {
+            background-color: #4158D0;
+            background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+        }
+
+        .custom-card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+        }
+
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen text-slate-800 flex flex-col justify-between overflow-x-hidden antialiased">
+
+    <!-- Top Navigation / Stats Header -->
+    <header class="w-full max-w-5xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between z-20">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('main-menu')">
+            <div class="bg-yellow-400 p-3 rounded-2xl shadow-lg transform -rotate-3 hover:rotate-0 transition">
+                <i class="fa-solid fa-crown text-2xl text-yellow-900"></i>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-white drop-shadow-md leading-tight">Grammar Safari</h1>
+                <p class="text-xs text-yellow-200 font-medium">¡Aprende Inglés Jugando!</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Stars Counter -->
+            <div class="bg-white/90 backdrop-blur-md px-3 sm:px-4 py-1.5 rounded-full shadow-md flex items-center gap-2 border-2 border-yellow-300">
+                <i class="fa-solid fa-star text-yellow-400 text-lg sm:text-xl animate-spin-slow"></i>
+                <span id="star-count" class="font-bold text-lg sm:text-xl text-yellow-900">0</span>
+            </div>
+
+            <!-- Sound Toggle Button -->
+            <button id="sound-btn" onclick="toggleSound()" class="bg-white/90 backdrop-blur-md p-2.5 rounded-full shadow-md hover:bg-white text-slate-700 hover:text-purple-600 transition w-10 h-10 flex items-center justify-center">
+                <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl mx-auto px-4 py-4 flex-grow flex items-center justify-center">
+
+        <!-- SCREEN 1: MAIN MENU -->
+        <div id="screen-main-menu" class="w-full flex flex-col items-center text-center space-y-6">
+            <!-- Title Banner -->
+            <div class="bg-white/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 custom-card-shadow border-4 border-yellow-300 max-w-xl w-full transform hover:scale-102 transition">
+                <div class="inline-block bg-yellow-100 text-yellow-800 text-xs sm:text-sm font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-compass mr-1"></i> Exploradores del Idioma
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-purple-900 mb-3">Grammar Treasure Hunt</h2>
+                <p class="text-slate-600 text-sm sm:text-base font-medium">
+                    ¡Acompaña a <span class="font-bold text-purple-700">Lucas</span> a descubrir los secretos de los adjetivos posesivos, artículos y sustantivos!
+                </p>
+                <div class="my-4 flex justify-center gap-3 text-3xl">
+                    <span class="animate-bounce" style="animation-delay: 0ms;">🔑</span>
+                    <span class="animate-bounce" style="animation-delay: 150ms;">⭐</span>
+                    <span class="animate-bounce" style="animation-delay: 300ms;">🏴‍☠️</span>
+                    <span class="animate-bounce" style="animation-delay: 450ms;">⚽</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+                <!-- Start Adventure Quiz -->
+                <button onclick="startQuiz()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border-b-4 border-emerald-700 group">
+                    <i class="fa-solid fa-play text-3xl group-hover:scale-125 transition"></i>
+                    <span class="font-bold text-lg">Modo Aventura</span>
+                    <span class="text-xs text-emerald-100">10 Preguntas y Retos</span>
+                </button>
+
+                <!-- Sorting Mini-Game -->
+                <button onclick="startSortingGame()" class="btn-3d bg-purple-600 hover:bg-purple-500 text-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border-b-4 border-purple-800 group">
+                    <i class="fa-solid fa-boxes-stacked text-3xl group-hover:scale-125 transition"></i>
+                    <span class="font-bold text-lg">Clasificador</span>
+                    <span class="text-xs text-purple-200">Ordena los Sustantivos</span>
+                </button>
+
+                <!-- Study Cards -->
+                <button onclick="showStudyCards()" class="btn-3d bg-amber-500 hover:bg-amber-400 text-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border-b-4 border-amber-700 group">
+                    <i class="fa-solid fa-book-open text-3xl group-hover:scale-125 transition"></i>
+                    <span class="font-bold text-lg">Libro de Reglas</span>
+                    <span class="text-xs text-amber-100">Repasa las 10 Reglas</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: STUDY FLASHCARDS -->
+        <div id="screen-study" class="hidden w-full max-w-2xl bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-2xl border-4 border-amber-300">
+            <div class="flex justify-between items-center mb-4">
+                <button onclick="showScreen('main-menu')" class="text-amber-700 hover:text-amber-900 font-bold text-sm flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> Menú
+                </button>
+                <span id="study-progress-text" class="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full">Regla 1 de 10</span>
+            </div>
+
+            <!-- Flashcard Display -->
+            <div id="flashcard-container" class="min-h-[260px] bg-amber-50/60 rounded-2xl p-6 border-2 border-amber-200 flex flex-col justify-center items-center text-center space-y-4 shadow-inner">
+                <span id="card-badge" class="px-3 py-1 bg-amber-200 text-amber-900 rounded-full text-xs font-bold uppercase"></span>
+                <h3 id="card-question" class="text-xl sm:text-2xl font-bold text-slate-800"></h3>
+                <div id="card-answer-box" class="bg-white p-4 rounded-xl shadow-md border border-amber-200 w-full max-w-md">
+                    <p id="card-answer" class="text-slate-700 text-base sm:text-lg font-medium"></p>
+                    <p id="card-example" class="text-purple-600 text-sm font-semibold mt-2 italic"></p>
+                </div>
+            </div>
+
+            <!-- Card Navigation -->
+            <div class="flex justify-between items-center mt-6 gap-4">
+                <button id="prev-card-btn" onclick="navigateCard(-1)" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm border-b-2 border-slate-400">
+                    <i class="fa-solid fa-chevron-left"></i> Anterior
+                </button>
+                <div class="flex gap-1" id="card-dots"></div>
+                <button id="next-card-btn" onclick="navigateCard(1)" class="btn-3d bg-amber-500 hover:bg-amber-400 text-white font-bold px-4 py-2.5 rounded-xl text-sm border-b-2 border-amber-700">
+                    Siguiente <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: QUIZ ADVENTURE -->
+        <div id="screen-quiz" class="hidden w-full max-w-2xl bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-emerald-300">
+            <!-- Quiz Progress Bar -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-600 mb-2">
+                    <span id="quiz-question-num" class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Pregunta 1 de 10</span>
+                    <span id="quiz-badge" class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full uppercase">Posesivos</span>
+                </div>
+                <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+                    <div id="quiz-progress-fill" class="bg-emerald-500 h-full transition-all duration-300 w-10%"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-emerald-50/50 rounded-2xl p-5 border-2 border-emerald-100 mb-6 text-center">
+                <h3 id="quiz-question-text" class="text-lg sm:text-2xl font-bold text-slate-800 leading-snug"></h3>
+                <p id="quiz-subtext" class="text-xs sm:text-sm text-slate-500 mt-2 font-medium"></p>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="quiz-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                <!-- Dynamic options generated by JS -->
+            </div>
+
+            <!-- Quiz Feedback Alert Box -->
+            <div id="quiz-feedback" class="hidden p-4 rounded-2xl text-center font-bold text-sm sm:text-base animate-bounceSlow"></div>
+
+            <div class="flex justify-end mt-4">
+                <button id="quiz-next-btn" onclick="nextQuestion()" class="hidden btn-3d bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-6 py-3 rounded-xl text-base border-b-4 border-emerald-700">
+                    Siguiente Pregunta <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: NOUN SORTING MINI-GAME -->
+        <div id="screen-sorting" class="hidden w-full max-w-3xl bg-white/95 backdrop-blur-md rounded-3xl p-5 sm:p-8 shadow-2xl border-4 border-purple-300">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-purple-900">Clasificador de Sustantivos (Nouns)</h3>
+                    <p class="text-xs text-slate-500">Toca un sustantivo y luego el cofre correcto:</p>
+                </div>
+                <button onclick="showScreen('main-menu')" class="text-purple-700 font-bold text-xs bg-purple-100 px-3 py-1.5 rounded-full hover:bg-purple-200">
+                    <i class="fa-solid fa-xmark"></i> Salir
+                </button>
+            </div>
+
+            <!-- Words Pool -->
+            <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200 mb-6">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2 text-center">Palabras por Clasificar</p>
+                <div id="sorting-words-pool" class="flex flex-wrap gap-2 justify-center min-h-[60px] items-center">
+                    <!-- Word Badges injected by JS -->
+                </div>
+            </div>
+
+            <!-- 3 Target Chest Buckets -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- People Chest -->
+                <div onclick="classifyActiveWord('People')" class="chest-bucket bg-pink-50 hover:bg-pink-100 border-2 border-pink-300 rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center">
+                    <div class="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center text-pink-700 text-2xl mb-2">
+                        👨‍🏫
+                    </div>
+                    <h4 class="font-bold text-pink-900 text-base">People</h4>
+                    <p class="text-xs text-pink-600 mb-2">(Personas)</p>
+                    <div id="bucket-People" class="w-full flex flex-wrap gap-1 justify-center min-h-[50px]"></div>
+                </div>
+
+                <!-- Places Chest -->
+                <div onclick="classifyActiveWord('Places')" class="chest-bucket bg-blue-50 hover:bg-blue-100 border-2 border-blue-300 rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center">
+                    <div class="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-700 text-2xl mb-2">
+                        🏫
+                    </div>
+                    <h4 class="font-bold text-blue-900 text-base">Places</h4>
+                    <p class="text-xs text-blue-600 mb-2">(Lugares)</p>
+                    <div id="bucket-Places" class="w-full flex flex-wrap gap-1 justify-center min-h-[50px]"></div>
+                </div>
+
+                <!-- Objects Chest -->
+                <div onclick="classifyActiveWord('Objects')" class="chest-bucket bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center">
+                    <div class="w-12 h-12 bg-amber-200 rounded-full flex items-center justify-center text-amber-700 text-2xl mb-2">
+                        ⚽
+                    </div>
+                    <h4 class="font-bold text-amber-900 text-base">Objects</h4>
+                    <p class="text-xs text-amber-600 mb-2">(Objetos)</p>
+                    <div id="bucket-Objects" class="w-full flex flex-wrap gap-1 justify-center min-h-[50px]"></div>
+                </div>
+            </div>
+
+            <!-- Sorting Feedback -->
+            <div id="sorting-feedback" class="mt-4 text-center font-bold text-sm min-h-[24px]"></div>
+        </div>
+
+        <!-- SCREEN 5: VICTORY & RESULTS -->
+        <div id="screen-victory" class="hidden w-full max-w-lg bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl text-center border-4 border-yellow-300">
+            <div class="inline-block bg-yellow-100 p-4 rounded-full text-4xl mb-3 text-yellow-600 animate-bounce">
+                🏆
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-800 mb-1">¡Felicidades, Explorador!</h2>
+            <p class="text-slate-600 text-sm mb-6">Has completado el desafío de Gramática con éxito.</p>
+
+            <div class="bg-yellow-50 rounded-2xl p-4 border border-yellow-200 mb-6 flex justify-around items-center">
+                <div>
+                    <span class="block text-xs text-slate-500 font-bold uppercase">Puntaje Final</span>
+                    <span id="final-score" class="text-3xl font-extrabold text-yellow-600">0/10</span>
+                </div>
+                <div class="h-10 w-px bg-yellow-200"></div>
+                <div>
+                    <span class="block text-xs text-slate-500 font-bold uppercase">Estrellas Ganadas</span>
+                    <span id="final-stars" class="text-3xl font-extrabold text-amber-500">⭐ 0</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="startQuiz()" class="btn-3d w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 rounded-2xl border-b-4 border-emerald-700">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Jugar de Nuevo
+                </button>
+                <button onclick="showScreen('main-menu')" class="btn-3d w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-2xl border-b-4 border-slate-400">
+                    Volver al Menú Principal
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-3 text-xs text-white/80 font-medium">
+        Grammar Safari &bull; Desarrollado para el Aprendizaje Divertido de Niños
+    </footer>
+
+    <script>
+        // Game State
+        let currentStars = 0;
+        let isMuted = false;
+        let currentQuestionIdx = 0;
+        let quizScore = 0;
+        let currentCardIdx = 0;
+        let selectedSortingWord = null;
+
+        // Sound FX using Web Audio API (No external assets required!)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now); // A3
+                    osc.frequency.exponentialRampToValueAtTime(164.81, now + 0.2); // E3
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'star') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(880, now); // A5
+                    osc.frequency.exponentialRampToValueAtTime(1760, now + 0.15); // A6
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'win') {
+                    // Win chime
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.frequency.setValueAtTime(freq, now + (i * 0.12));
+                        noteGain.gain.setValueAtTime(0.2, now + (i * 0.12));
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + (i * 0.12) + 0.25);
+                        noteOsc.start(now + (i * 0.12));
+                        noteOsc.stop(now + (i * 0.12) + 0.25);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio not supported or waiting for user interaction");
+            }
+        }
+
+        function toggleSound() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('sound-icon');
+            if (isMuted) {
+                icon.className = 'fa-solid fa-volume-xmark text-red-500';
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-slate-700';
+                playSound('star');
+            }
+        }
+
+        // 10 Key Grammar Rules from Prompt
+        const grammarRules = [
+            {
+                id: 1,
+                topic: "Posesivos",
+                question: "¿Qué indican los adjetivos o pronombres posesivos?",
+                answer: "Indican propiedad o posesión (ownership/possession).",
+                example: "Ejemplo: Mi casa, tu libro."
+            },
+            {
+                id: 2,
+                topic: "Posesivos",
+                question: "¿Qué significa el adjetivo posesivo \"My\"?",
+                answer: "Significa \"Mi\" en español.",
+                example: "Ejemplo: \"My name is Lucas\" (Mi nombre es Lucas)."
+            },
+            {
+                id: 3,
+                topic: "Posesivos",
+                question: "¿Qué significa el adjetivo posesivo \"Your\"?",
+                answer: "Significa \"Tu\" en español.",
+                example: "Ejemplo: \"Your turn\" (Tu turno)."
+            },
+            {
+                id: 4,
+                topic: "Artículos",
+                question: "¿Cuál es la función principal de los artículos?",
+                answer: "Presentar o introducir sustantivos (introduce nouns).",
+                example: "Ejemplo: A ball, The class."
+            },
+            {
+                id: 5,
+                topic: "Artículos",
+                question: "¿Qué significa el artículo indefinido \"A\" y cuándo se usa?",
+                answer: "Significa \"Un / Una\". Se usa antes de sustantivos singulares contables.",
+                example: "Ejemplo: a teacher, a ball."
+            },
+            {
+                id: 6,
+                topic: "Artículos",
+                question: "¿Qué significa el artículo definido \"The\" y cuándo se usa?",
+                answer: "Significa \"El / La / Los / Las\". Se usa cuando el sustantivo ya es conocido por los hablantes.",
+                example: "Ejemplo: The class, The yard."
+            },
+            {
+                id: 7,
+                topic: "Sustantivos",
+                question: "¿Qué es un Sustantivo (Noun)?",
+                answer: "Es una palabra que nombra una persona, lugar, objeto o idea.",
+                example: "Ejemplo: Teacher, School, Ball."
+            },
+            {
+                id: 8,
+                topic: "Sustantivos",
+                question: "¿Cuáles son ejemplos de sustantivos para PERSONAS?",
+                answer: "Teacher, Friend, Student.",
+                example: "Ejemplo: The teacher is happy."
+            },
+            {
+                id: 9,
+                topic: "Sustantivos",
+                question: "¿Cuáles son ejemplos de sustantivos para LUGARES?",
+                answer: "School, Class, Yard.",
+                example: "Ejemplo: We are in the school yard."
+            },
+            {
+                id: 10,
+                topic: "Sustantivos",
+                question: "¿Cuáles son ejemplos de sustantivos para OBJETOS?",
+                answer: "Ball, Treasure chest, Stars.",
+                example: "Ejemplo: A ball and a treasure chest."
+            }
+        ];
+
+        // 10 Interactive Quiz Questions corresponding directly to prompt requirements
+        const quizQuestions = [
+            {
+                topic: "Posesivos",
+                question: "1. What do possessive adjectives or pronouns indicate?",
+                subtext: "¿Qué indican los adjetivos o pronombres posesivos?",
+                options: [
+                    { text: "They indicate ownership or possession", correct: true },
+                    { text: "They indicate actions and jumps", correct: false },
+                    { text: "They describe colors and shapes", correct: false }
+                ]
+            },
+            {
+                topic: "Posesivos",
+                question: "2. What does the possessive adjective \"My\" mean?",
+                subtext: "¿Qué significa \"My\"? (Ej: My name is Lucas)",
+                options: [
+                    { text: "Tu", correct: false },
+                    { text: "Mi", correct: true },
+                    { text: "El / La", correct: false }
+                ]
+            },
+            {
+                topic: "Posesivos",
+                question: "3. What does the possessive adjective \"Your\" mean?",
+                subtext: "¿Qué significa \"Your\"? (Ej: Your turn)",
+                options: [
+                    { text: "Mi", correct: false },
+                    { text: "Tu", correct: true },
+                    { text: "Un / Una", correct: false }
+                ]
+            },
+            {
+                topic: "Artículos",
+                question: "4. What is the primary function of articles?",
+                subtext: "¿Cuál es la función principal de los artículos?",
+                options: [
+                    { text: "To introduce nouns", correct: true },
+                    { text: "To replace verbs", correct: false },
+                    { text: "To count numbers", correct: false }
+                ]
+            },
+            {
+                topic: "Artículos",
+                question: "5. What does the indefinite article \"A\" mean and when is it used?",
+                subtext: "¿Qué significa \"A\" y cuándo se usa?",
+                options: [
+                    { text: "Means \"El / La\" for plural nouns", correct: false },
+                    { text: "Means \"Un / Una\" before singular countable nouns", correct: true },
+                    { text: "Means \"Tu\" for friends", correct: false }
+                ]
+            },
+            {
+                topic: "Artículos",
+                question: "6. What does the definite article \"The\" mean and when is it used?",
+                subtext: "¿Qué significa \"The\" y cuándo se usa?",
+                options: [
+                    { text: "Means \"El / La / Los / Las\" when the noun is already known", correct: true },
+                    { text: "Means \"Un / Una\" for unknown places", correct: false },
+                    { text: "Means \"Mi / Tu\" for possession", correct: false }
+                ]
+            },
+            {
+                topic: "Sustantivos",
+                question: "7. What is a Noun?",
+                subtext: "¿Qué es un Sustantivo (Noun)?",
+                options: [
+                    { text: "An action like run or jump", correct: false },
+                    { text: "A word that names a person, place, object, or idea", correct: true },
+                    { text: "A number or color", correct: false }
+                ]
+            },
+            {
+                topic: "Sustantivos",
+                question: "8. Which of these are examples of nouns for PEOPLE?",
+                subtext: "¿Cuáles son sustantivos para PERSONAS?",
+                options: [
+                    { text: "School, Class, Yard", correct: false },
+                    { text: "Ball, Treasure chest, Stars", correct: false },
+                    { text: "Teacher, Friend, Student", correct: true }
+                ]
+            },
+            {
+                topic: "Sustantivos",
+                question: "9. Which of these are examples of nouns for PLACES?",
+                subtext: "¿Cuáles son sustantivos para LUGARES?",
+                options: [
+                    { text: "School, Class, Yard", correct: true },
+                    { text: "Teacher, Friend, Student", correct: false },
+                    { text: "My, Your, The", correct: false }
+                ]
+            },
+            {
+                topic: "Sustantivos",
+                question: "10. Which of these are examples of nouns for OBJECTS?",
+                subtext: "¿Cuáles son sustantivos para OBJETOS?",
+                options: [
+                    { text: "School, Yard, Teacher", correct: false },
+                    { text: "Ball, Treasure chest, Stars", correct: true },
+                    { text: "A, The, My", correct: false }
+                ]
+            }
+        ];
+
+        // Noun Sorting Mini-Game Data
+        const sortingItems = [
+            { word: "Teacher", category: "People", emoji: "👨‍🏫" },
+            { word: "Friend", category: "People", emoji: "👧" },
+            { word: "Student", category: "People", emoji: "🧑‍🎓" },
+            { word: "School", category: "Places", emoji: "🏫" },
+            { word: "Class", category: "Places", emoji: "📚" },
+            { word: "Yard", category: "Places", emoji: "🛝" },
+            { word: "Ball", category: "Objects", emoji: "⚽" },
+            { word: "Treasure chest", category: "Objects", emoji: "🏴‍☠️" },
+            { word: "Stars", category: "Objects", emoji: "⭐" }
+        ];
+
+        function showScreen(screenId) {
+            document.querySelectorAll('main > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+        }
+
+        function updateStars(count) {
+            currentStars += count;
+            document.getElementById('star-count').innerText = currentStars;
+            if (count > 0) {
+                playSound('star');
+            }
+        }
+
+        function showStudyCards() {
+            currentCardIdx = 0;
+            renderCard();
+            showScreen('study');
+        }
+
+        function renderCard() {
+            const rule = grammarRules[currentCardIdx];
+            document.getElementById('study-progress-text').innerText = `Regla ${currentCardIdx + 1} de ${grammarRules.length}`;
+            document.getElementById('card-badge').innerText = rule.topic;
+            document.getElementById('card-question').innerText = rule.question;
+            document.getElementById('card-answer').innerText = rule.answer;
+            document.getElementById('card-example').innerText = rule.example;
+
+            // Render Pagination Dots
+            const dotsContainer = document.getElementById('card-dots');
+            dotsContainer.innerHTML = '';
+            grammarRules.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = `w-2.5 h-2.5 rounded-full ${idx === currentCardIdx ? 'bg-amber-500 w-5' : 'bg-amber-200'} transition-all`;
+                dotsContainer.appendChild(dot);
+            });
+
+            document.getElementById('prev-card-btn').disabled = currentCardIdx === 0;
+            document.getElementById('next-card-btn').disabled = currentCardIdx === grammarRules.length - 1;
+        }
+
+        function navigateCard(direction) {
+            currentCardIdx += direction;
+            if (currentCardIdx < 0) currentCardIdx = 0;
+            if (currentCardIdx >= grammarRules.length) currentCardIdx = grammarRules.length - 1;
+            renderCard();
+        }
+
+        function startQuiz() {
+            currentQuestionIdx = 0;
+            quizScore = 0;
+            showScreen('quiz');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const q = quizQuestions[currentQuestionIdx];
+            document.getElementById('quiz-question-num').innerText = `Pregunta ${currentQuestionIdx + 1} de ${quizQuestions.length}`;
+            document.getElementById('quiz-badge').innerText = q.topic;
+            document.getElementById('quiz-question-text').innerText = q.question;
+            document.getElementById('quiz-subtext').innerText = q.subtext;
+
+            // Progress bar
+            const pct = ((currentQuestionIdx + 1) / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress-fill').style.width = `${pct}%`;
+
+            // Reset feedback and button
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.classList.add('hidden');
+            feedbackEl.className = 'hidden p-4 rounded-2xl text-center font-bold text-sm sm:text-base animate-bounceSlow';
+            document.getElementById('quiz-next-btn').classList.add('hidden');
+
+            // Options
+            const container = document.getElementById('quiz-options-container');
+            container.innerHTML = '';
+
+            // Shuffle options for variety
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-opt-btn btn-3d w-full bg-white hover:bg-emerald-50 text-slate-700 font-bold p-4 rounded-2xl border-2 border-slate-200 text-left text-sm sm:text-base flex items-center justify-between transition';
+                btn.innerHTML = `<span>${opt.text}</span> <i class="fa-regular fa-circle text-slate-300"></i>`;
+                btn.onclick = () => selectQuizAnswer(btn, opt.correct);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectQuizAnswer(selectedBtn, isCorrect) {
+            // Disable all option buttons
+            const allBtns = document.querySelectorAll('.quiz-opt-btn');
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-emerald-50');
+            });
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+
+            if (isCorrect) {
+                quizScore++;
+                updateStars(1);
+                playSound('correct');
+                selectedBtn.className = 'btn-3d w-full bg-emerald-500 text-white font-bold p-4 rounded-2xl border-2 border-emerald-600 text-left text-sm sm:text-base flex items-center justify-between';
+                selectedBtn.innerHTML += ' <i class="fa-solid fa-circle-check text-xl"></i>';
+
+                feedbackEl.innerHTML = '🎉 ¡Excelente Trabajo! +1 Estrella ⭐';
+                feedbackEl.classList.add('bg-emerald-100', 'text-emerald-800', 'border-2', 'border-emerald-300');
+            } else {
+                playSound('wrong');
+                selectedBtn.className = 'btn-3d w-full bg-rose-500 text-white font-bold p-4 rounded-2xl border-2 border-rose-600 text-left text-sm sm:text-base flex items-center justify-between';
+                selectedBtn.innerHTML += ' <i class="fa-solid fa-circle-xmark text-xl"></i>';
+
+                feedbackEl.innerHTML = '💡 ¡Casi! Recuerda repasar en el Libro de Reglas.';
+                feedbackEl.classList.add('bg-rose-100', 'text-rose-800', 'border-2', 'border-rose-300');
+            }
+
+            feedbackEl.classList.remove('hidden');
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIdx++;
+            if (currentQuestionIdx < quizQuestions.length) {
+                renderQuizQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('final-score').innerText = `${quizScore} / ${quizQuestions.length}`;
+            document.getElementById('final-stars').innerText = `⭐ ${quizScore}`;
+            showScreen('victory');
+            playSound('win');
+
+            // Trigger celebration confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        let activeWordsPool = [];
+
+        function startSortingGame() {
+            activeWordsPool = [...sortingItems].sort(() => Math.random() - 0.5);
+            selectedSortingWord = null;
+
+            // Clear buckets
+            document.getElementById('bucket-People').innerHTML = '';
+            document.getElementById('bucket-Places').innerHTML = '';
+            document.getElementById('bucket-Objects').innerHTML = '';
+            document.getElementById('sorting-feedback').innerText = '';
+
+            renderSortingPool();
+            showScreen('sorting');
+        }
+
+        function renderSortingPool() {
+            const pool = document.getElementById('sorting-words-pool');
+            pool.innerHTML = '';
+
+            if (activeWordsPool.length === 0) {
+                pool.innerHTML = '<span class="text-emerald-600 font-bold text-base">🎉 ¡Increíble! Clasificaste todas las palabras correctamente.</span>';
+                updateStars(3);
+                playSound('win');
+                confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+                return;
+            }
+
+            activeWordsPool.forEach((item, idx) => {
+                const badge = document.createElement('button');
+                const isSelected = selectedSortingWord === item;
+                badge.className = `btn-3d px-3 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition ${
+                    isSelected ? 'bg-purple-600 text-white ring-4 ring-purple-300 scale-105' : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-purple-400'
+                }`;
+                badge.innerHTML = `<span>${item.emoji}</span> <span>${item.word}</span>`;
+                badge.onclick = () => {
+                    selectedSortingWord = item;
+                    playSound('star');
+                    renderSortingPool();
+                };
+                pool.appendChild(badge);
+            });
+        }
+
+        function classifyActiveWord(targetCategory) {
+            const feedback = document.getElementById('sorting-feedback');
+            if (!selectedSortingWord) {
+                feedback.innerText = '👇 Toca primero una palabra de arriba para seleccionar.';
+                feedback.className = 'mt-4 text-center font-bold text-sm text-amber-600';
+                return;
+            }
+
+            if (selectedSortingWord.category === targetCategory) {
+                // Correct match!
+                playSound('correct');
+                feedback.innerText = `¡Correcto! "${selectedSortingWord.word}" es un sustantivo de tipo ${targetCategory}. ✨`;
+                feedback.className = 'mt-4 text-center font-bold text-sm text-emerald-600';
+
+                // Add badge to bucket
+                const bucket = document.getElementById(`bucket-${targetCategory}`);
+                const wordTag = document.createElement('span');
+                wordTag.className = 'bg-white/90 text-slate-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-300 shadow-sm flex items-center gap-1';
+                wordTag.innerHTML = `${selectedSortingWord.emoji} ${selectedSortingWord.word}`;
+                bucket.appendChild(wordTag);
+
+                // Remove from active pool
+                activeWordsPool = activeWordsPool.filter(w => w !== selectedSortingWord);
+                selectedSortingWord = null;
+                renderSortingPool();
+            } else {
+                // Incorrect match
+                playSound('wrong');
+                feedback.innerText = `Intenta de nuevo: "${selectedSortingWord.word}" no pertenece a ${targetCategory}. 🤔`;
+                feedback.className = 'mt-4 text-center font-bold text-sm text-rose-600 animate-wiggle';
+            }
+        }
+
+        // Initialize audio on first click
+        window.addEventListener('click', () => {
+            initAudio();
+        }, { once: true });
+    </script>
+</body>
+</html>
